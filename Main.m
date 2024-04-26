@@ -2,41 +2,58 @@ clc;
 clear all;
 close all;
 
-% I=imread('C:\Users\user\Pictures\images.JPG');
-I=imread('E:\MATLAB Projects\Railway Track Crack Detection\Railway-Track-Crack-Detection\\track-with-crack.jpg');
-imshow(I);
+% Import functions from modules
+addpath('modules');
 
-A=rgb2gray(I);
-I2=histeq(A);
-figure, imshow(I2), title('Image after contrast adjustment');
+% Prompt the user to enter the path to the image
+imagePath = input('Enter the path to the image: ', 's');
+imagePath = "assets/" + imagePath;
 
-threshold=graythresh(I2);
-B=im2bw(I2,threshold);
-figure, imshow(B), title('Binary Image');
+% Read the image
+readImageFunc = @readImage;
+inputImage = readImageFunc(imagePath);
+imshow(inputImage);
 
-B1=bwmorph(B,'clean',inf);
-figure, imshow(B1), title('Image after removing isolated pixels');
+% Preprocess the image
+preprocessImageFunc = @preprocessImage;
+preprocessedImage = preprocessImageFunc(inputImage);
+figure, imshow(preprocessedImage), title('Image after contrast adjustment');
 
-B2=imfill(B1,'holes');
-figure, imshow(B2), title('Image after filling holes');
+% Binarize the image
+binarizeImageFunc = @binarizeImage;
+binaryImage = binarizeImageFunc(preprocessedImage);
+figure, imshow(binaryImage), title('Binary Image');
 
-B3=bwmorph(B2,'open');
-figure, imshow(B3), title('Image after morphological opening');
+% Clean the image
+cleanImageFunc = @cleanImage;
+cleanedImage = cleanImageFunc(binaryImage);
+figure, imshow(cleanedImage), title('Image after removing isolated pixels');
 
-B4=bwareaopen(B3,11000,8);
-figure, imshow(B4), title('Image after removing connected components who have pixels lesser than specified');
+% Fill holes in the image
+fillHolesFunc = @fillHoles;
+filledImage = fillHolesFunc(cleanedImage);
+figure, imshow(filledImage), title('Image after filling holes');
 
-B5=bwmorph(B4,'majority');
-for n=1:6
-    B5=bwmorph(B5,'majority');
-end
-figure, imshow(B5), title('Image after removing minority pixels/objects');
+% Perform morphological opening
+performOpeningFunc = @performOpening;
+openedImage = performOpeningFunc(filledImage);
+figure, imshow(openedImage), title('Image after morphological opening');
 
-CC=bwconncomp(B5);
-disp(CC);
+% Remove small regions
+removeSmallRegionsFunc = @removeSmallRegions;
+removedSmallRegions = removeSmallRegionsFunc(openedImage);
+figure, imshow(removedSmallRegions), title('Image after removing small regions');
 
-if(CC.NumObjects)== 1
-    disp('No Crack Found...');
-else
-    disp('Crack Found!');
-end
+% Perform majority filtering
+performMajorityFilteringFunc = @performMajorityFiltering;
+majorityImage = performMajorityFilteringFunc(removedSmallRegions);
+figure, imshow(majorityImage), title('Image after majority filtering');
+
+% Find connected components
+findConnectedComponentsFunc = @findConnectedComponents;
+connectedComponents = findConnectedComponentsFunc(majorityImage);
+disp(connectedComponents);
+
+% Display results
+displayResultsFunc = @displayResults;
+displayResultsFunc(connectedComponents);
